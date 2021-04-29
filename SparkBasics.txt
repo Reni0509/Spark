@@ -1,0 +1,45 @@
+from pyspark.sql import SparkSession
+spark=SparkSession.builder.appName("Basics").getOrCreate()
+df=spark.read.json('dbfs:/FileStore/FileStore/people.json')
+df=spark.read.json('dbfs:/FileStore/FileStore/people.json')
+from pyspark.sql.types import (StructField,IntegerType,StringType,StructType)
+data_schema=[StructField('age',IntegerType(),True),StructField('name',StringType(),True)]
+finalstruc=StructType(fields=data_schema)
+df1=spark.read.json('dbfs:/FileStore/FileStore/people.json',schema=finalstruc)
+df1.show()
+type(df1['age'])
+df.select(['age','name']).show()
+df1.createOrReplaceTempView('people')
+results=spark.sql("select * from people")
+results.show()
+
+
+df2=spark.read.csv('dbfs:/FileStore/FileStore/appl_stock.csv',header=True) 
+df2.printSchema()
+df.show()
+df2.filter(df2['Close']<200).select('volume','Date').show()
+df2.filter((df2['close']<300) & (df2['open']>200)).show()
+result=df2.filter(df2['low']==197.16).collect()
+row=result[0]
+row.asDict()['Volume']
+
+
+
+df3=spark.read.csv('dbfs:/FileStore/FileStore/sales_info-1.csv',inferSchema=True,header=True)
+df3.show()
+df3.groupby('Company').count().show()
+df3.agg({'Sales':'avg'}).show()
+from pyspark.sql.functions import stddev
+std=df3.select(stddev('Sales').alias('stddevn'))
+from pyspark.sql.functions import format_number
+std.select(format_number('stddevn',3)).show()
+df3.orderBy(df3['Sales'].desc()).show()
+
+
+df4=spark.read.csv('dbfs:/FileStore/FileStore/ContainsNull.csv',inferSchema=True,header=True)
+df4.na.drop(thresh=2).show()
+df4.na.fill('NULL VALUE').show()
+df4.na.fill(0,subset=['Sales']).show()
+val=df4.agg({'Sales':'avg'}).collect()
+val[0][0]
+df4.na.fill(val[0][0],'Sales').show()
